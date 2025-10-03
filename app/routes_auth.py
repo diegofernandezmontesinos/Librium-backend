@@ -1,23 +1,29 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
+from fastapi.responses import JSONResponse
 from passlib.context import CryptContext
-from jose import JWTError, jwt
+from jose import jwt
 from datetime import datetime, timedelta
+import requests
+
 from app import models, schemas, database
 
 router = APIRouter()
 
-# Configuración de JWT
-SECRET_KEY = "supersecretkey"
+# 🔑 Secret key para JWT
+SECRET_KEY = "supersecretkey"  # Cámbialo por tu .env en producción
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+# 🔑 Secret key de Cloudflare Turnstile
+TURNSTILE_SECRET = "0x4AAAAAAB4m2ixb18GQb8pUtTqH9bNth1I"
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def get_password_hash(password):
+def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
-def verify_password(plain, hashed):
+def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
@@ -25,6 +31,18 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def verify_captcha(token: str) -> bool:
+    """Valida el token del captcha en Cloudflare"""
+    resp = requests.post(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        data={
+            "secret": TURNSTILE_SECRET,
+            "response": token
+        }
+    )
+    result = resp.json()
+    return result.get("success", False)
 
 @router.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
@@ -40,10 +58,36 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
     return new_user
 
 @router.post("/login")
-def login(user: schemas.UserLogin, db: Session = Depends(database.get_db)):
+def login(user: schemas.UserLogin, response: Response, db: Session = Depends(database.get_db)):
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
-    if not db_user or not verify_password(user.password, db_user.hashed_password):
-        raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
-    access_token = create_access_token(data={"sub": db_user.username}, expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    return {"access_token": access_token, "token_type": "bearer"}
+    # Usuario no encontrado o contraseña incorrecta
+    if not db_user or not verify_password(user.password, db_user.hashed_password):
+        return JSONResponse(
+            status_code=401,
+            content={"status": 401, "message": "Credenciales inválidas"}
+        )
+
+    # Aquí podrías agregar validación de captcha si quieres
+    # if not verify_captcha(user.captchaToken):
+    #     return JSONResponse(
+    #         status_code=403,
+    #         content={"status": 403, "message": "Captcha inválido"}
+    #     )
+
+    access_token = create_access_token(
+        data={"sub": db_user.username},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
+
+    # Set cookie HttpOnly
+    response.set_cookie(
+        key="autorizado",
+        value=access_token,
+        httponly=True,
+        secure=False,  # True en producción con HTTPS
+        samesite="Lax",
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+
+    return {"status": 200, "message": "Login successful", "username": db_user.username}

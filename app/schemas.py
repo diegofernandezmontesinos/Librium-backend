@@ -7,10 +7,11 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+    captchaToken: str
 
 class UserResponse(BaseModel):
     id: int
     username: str
 
     class Config:
-        orm_mode = True
+        from_attributes  = True
