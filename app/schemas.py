@@ -1,37 +1,41 @@
-# app/schemas.py
 from pydantic import BaseModel
 from typing import Optional
+from enum import Enum
 
+# Enum de roles
+class UserRole(str, Enum):
+    admin = "admin"
+    user = "user"
 
+# Usuarios
 class UserCreate(BaseModel):
     username: str
     password: str
-
+    role: UserRole = UserRole.user  # Por defecto es 'user'
 
 class UserLogin(BaseModel):
     username: str
     password: str
-    captchaToken: Optional[str] = None  # opcional si no siempre verificas captcha
-
+    captchaToken: Optional[str] = None  # Opcional si no verificas captcha siempre
 
 class UserResponse(BaseModel):
     id: int
     username: str
+    role: UserRole  # Enum
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+    }
 
-
+# Libros
 class BookBase(BaseModel):
     title: str
     author: str
     description: Optional[str] = None
     year: Optional[int] = None
 
-
 class BookCreate(BookBase):
     pass
-
 
 class BookUpdate(BaseModel):
     title: Optional[str] = None
@@ -39,9 +43,9 @@ class BookUpdate(BaseModel):
     description: Optional[str] = None
     year: Optional[int] = None
 
-
 class BookResponse(BookBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+    }

@@ -64,15 +64,12 @@ def verify_captcha(token: str) -> bool:
 
 @router.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    """
-    Register a new user with hashed password.
-    """
     existing = db.query(models.User).filter(models.User.username == user.username).first()
     if existing:
         raise HTTPException(status_code=400, detail="Usuario ya existe")
 
     hashed_pw = get_password_hash(user.password)
-    new_user = models.User(username=user.username, hashed_password=hashed_pw)
+    new_user = models.User(username=user.username, hashed_password=hashed_pw, role=user.role)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -113,7 +110,7 @@ def login(user: schemas.UserLogin, response: Response, db: Session = Depends(get
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
-    return {"status": 200, "message": "Login successful", "username": db_user.username}
+    return {"status": 200, "message": "Login successful", "username": db_user.username, "role": db_user.role.value}
 
 
 @router.get("/me")

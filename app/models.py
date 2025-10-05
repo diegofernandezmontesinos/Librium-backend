@@ -1,7 +1,10 @@
-# app/models.py
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, Integer, String, Text, Enum as SqlEnum
 from .database import Base
+import enum
 
+class UserRole(enum.Enum):
+    admin = "admin"
+    user = "user"
 
 class User(Base):
     __tablename__ = "users"
@@ -9,7 +12,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-
+    role = Column(SqlEnum(UserRole), default=UserRole.user, nullable=False)  # 👈 rol como enum
 
 class Book(Base):
     __tablename__ = "books"
