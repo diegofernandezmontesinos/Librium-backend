@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, HttpUrl
+from typing import Optional, Union
 from enum import Enum
 
 # Enum de roles
@@ -33,6 +33,7 @@ class BookBase(BaseModel):
     author: str
     description: Optional[str] = None
     year: Optional[int] = None
+    image_url: Optional[Union[str, HttpUrl]] = None 
 
 class BookCreate(BookBase):
     pass
