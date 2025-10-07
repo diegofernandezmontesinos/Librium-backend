@@ -1,6 +1,7 @@
 # app/main.py
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import logging
 import os
 
@@ -9,10 +10,14 @@ from app.database import engine
 from app.routes_auth import router as auth_router
 from app.routes_books import router as books_router
 
+
+
 # Crear tablas (si no existen)
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="OnlineLibrary API")
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Configuración CORS (dev)
 origins = [
