@@ -9,6 +9,7 @@ from app import models
 from app.database import engine
 from app.routes_auth import router as auth_router
 from app.routes_books import router as books_router
+from app.routes_cart import router as cart_router
 
 
 
@@ -48,3 +49,4 @@ async def log_requests(request: Request, call_next):
 # Rutas
 app.include_router(auth_router)
 app.include_router(books_router)
+app.include_router(cart_router) 
