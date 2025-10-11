@@ -4,7 +4,8 @@ from sqlalchemy import (
     String,
     ForeignKey,
     Text,
-    Enum,  # 👈 Enum correcto
+    Enum,
+    Float,
 )
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -38,8 +39,9 @@ class Book(Base):
     description = Column(Text, nullable=True)
     year = Column(Integer, nullable=True)
     image_url = Column(String, nullable=True)
+    section = Column(String, nullable=True) 
+    price = Column(Float, nullable=False, default=0.0)
 
-    # relaciones
     cart_items = relationship("CartItem", back_populates="book")
 
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, Form, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import os, shutil
@@ -17,8 +17,10 @@ async def create_book(
     author: str = Form(...),
     description: Optional[str] = Form(None),
     year: Optional[int] = Form(None),
+    section: Optional[str] = Form(None), 
     image_url: Optional[str] = Form(None),
     image: Optional[UploadFile] = None,
+    price: float = Form(...),
     db: Session = Depends(get_db)
 ):
     if db.query(models.Book).filter(models.Book.title == title).first():
@@ -31,12 +33,13 @@ async def create_book(
             shutil.copyfileobj(image.file, buffer)
         saved_image_url = file_path
 
-
     new_book = models.Book(
         title=title,
         author=author,
         description=description,
         year=year,
+        section=section,
+        price=price,
         image_url=saved_image_url,
     )
     db.add(new_book)
@@ -46,8 +49,15 @@ async def create_book(
 
 
 @router.get("/", response_model=List[schemas.BookResponse])
-def list_books(db: Session = Depends(get_db)):
-    return db.query(models.Book).all()
+def list_books(section: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    """
+    List all books. If `section` is provided, filter by section.
+    """
+    query = db.query(models.Book)
+    if section:
+        query = query.filter(models.Book.section.ilike(f"%{section}%"))
+    return query.all()
+
 
 
 @router.put("/{book_id}", response_model=schemas.BookResponse)
@@ -57,7 +67,9 @@ async def update_book(
     author: str = Form(...),
     description: Optional[str] = Form(None),
     year: Optional[int] = Form(None),
+    section: Optional[str] = Form(None), 
     image_url: Optional[str] = Form(None),
+    price: float = Form(...),
     image: Optional[UploadFile] = None,
     db: Session = Depends(get_db)
 ):
@@ -66,7 +78,7 @@ async def update_book(
         raise HTTPException(status_code=404, detail="Book not found")
 
     # si sube nueva imagen
-    if image:
+    if image and image.filename:
         file_path = f"{UPLOAD_DIR}/{image.filename}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
@@ -78,6 +90,8 @@ async def update_book(
     db_book.author = author
     db_book.description = description
     db_book.year = year
+    db_book.price = price 
+    db_book.section = section  
 
     db.commit()
     db.refresh(db_book)

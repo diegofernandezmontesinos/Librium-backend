@@ -33,7 +33,9 @@ class BookBase(BaseModel):
     author: str
     description: Optional[str] = None
     year: Optional[int] = None
-    image_url: Optional[Union[str, HttpUrl]] = None 
+    image_url: Optional[Union[str, HttpUrl]] = None
+    section: Optional[str] = None
+    price: Optional[float] = 0
 
 class BookCreate(BookBase):
     pass
@@ -43,6 +45,7 @@ class BookUpdate(BaseModel):
     author: Optional[str] = None
     description: Optional[str] = None
     year: Optional[int] = None
+    section: Optional[str] = None 
 
 class BookResponse(BookBase):
     id: int
