@@ -1,40 +1,62 @@
 from pydantic import BaseModel, HttpUrl
-from typing import Optional, Union
+from typing import Optional, Union, List
 from enum import Enum
 
-# Enum de roles
+# ==========================================================
+# Enums
+# ==========================================================
+
 class UserRole(str, Enum):
     admin = "admin"
     user = "user"
 
-# Usuarios
+class SectionEnum(str, Enum):
+    TOP_SELLER = "topSeller"
+    FICTION = "fiction"
+    KIDS = "kids"
+    SPANISH_BOOKS = "spanishBooks"
+    EBOOKS = "ebooks"
+    OFFERTS = "offerts"
+    TECHNICAL_BOOKS = "technicalBooks"
+    TERROR = "terror"
+    SCIENCE = "science"
+    HISTORY = "history"
+    AUTHOR = "author"
+    CLUB = "club"
+    NEW = "new"
+
+# ==========================================================
+# Users
+# ==========================================================
+
 class UserCreate(BaseModel):
     username: str
     password: str
-    role: UserRole = UserRole.user  # Por defecto es 'user'
+    role: UserRole = UserRole.user  # por defecto "user"
 
 class UserLogin(BaseModel):
     username: str
     password: str
-    captchaToken: Optional[str] = None  # Opcional si no verificas captcha siempre
+    captchaToken: Optional[str] = None  # opcional
 
 class UserResponse(BaseModel):
     id: int
     username: str
-    role: UserRole  # Enum
+    role: UserRole
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
-# Libros
+# ==========================================================
+# Books
+# ==========================================================
+
 class BookBase(BaseModel):
     title: str
     author: str
     description: Optional[str] = None
     year: Optional[int] = None
     image_url: Optional[Union[str, HttpUrl]] = None
-    section: Optional[str] = None
+    section: Optional[SectionEnum] = None  # 👈 ahora es tipado
     price: Optional[float] = 0
 
 class BookCreate(BookBase):
@@ -45,23 +67,24 @@ class BookUpdate(BaseModel):
     author: Optional[str] = None
     description: Optional[str] = None
     year: Optional[int] = None
-    section: Optional[str] = None 
+    section: Optional[SectionEnum] = None  # 👈 tipado aquí también
+    price: Optional[float] = None
 
 class BookResponse(BookBase):
     id: int
 
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
+
+# ==========================================================
+# Cart Items
+# ==========================================================
 
 class CartItemBase(BaseModel):
     user_id: int
     book_id: int
 
-
 class CartItemCreate(CartItemBase):
     pass
-
 
 class CartItemResponse(BaseModel):
     id: int
@@ -69,3 +92,14 @@ class CartItemResponse(BaseModel):
     book: BookResponse  # relación anidada
 
     model_config = {"from_attributes": True}
+
+# ==========================================================
+# Paginación de Libros
+# ==========================================================
+
+class PaginatedBooks(BaseModel):
+    total: int
+    page: int
+    limit: int
+    items: List[BookResponse]
+
