@@ -17,7 +17,7 @@ UPLOAD_DIR = "uploads/books"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # 🌍 URL base de tu servidor (ajústala según tu entorno)
-BASE_URL = "http://localhost:8000"
+BASE_URL = "http://localhost:4000"
 
 
 # -------------------------------
