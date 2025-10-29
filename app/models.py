@@ -23,8 +23,12 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, unique=True, nullable=True)
+    name = Column(String, nullable=True)
+    avatar = Column(String, nullable=True)
+    joined_at = Column(String, nullable=True)
     hashed_password = Column(String, nullable=False)
-    role = Column(Enum(UserRole), default=UserRole.user, nullable=False) 
+    role = Column(Enum(UserRole), default=UserRole.user, nullable=False)
 
     # relaciones
     cart_items = relationship("CartItem", back_populates="user")

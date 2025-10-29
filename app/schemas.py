@@ -46,6 +46,23 @@ class UserResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+class UserOut(BaseModel):
+    id: int
+    username: str
+    name: Optional[str]
+    email: Optional[EmailStr]
+    avatar: Optional[str]
+    joined_at: Optional[str]
+    role: str
+
+    model_config = {"from_attributes": True}
+
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    avatar: Optional[str] = None
+
 # ==========================================================
 # Books
 # ==========================================================
