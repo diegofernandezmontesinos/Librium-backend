@@ -9,5 +9,5 @@ python-multipart
 requests
 pytest
 httpx
-python-multipart
+email-validator
 
